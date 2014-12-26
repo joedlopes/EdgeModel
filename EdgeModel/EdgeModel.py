@@ -579,21 +579,4 @@ class EdgeModel(object):
 '''EdgeModel End --------------------------------------------------------------------------------------'''
 
 
-class TipoPessoa(EdgeModel):
-
-    def __define_model__(self):
-        self.table_name = 'tipo_pessoa'
-        self.id_tipo_pessoa = IntegerField(PrimaryKey, AutoIncrement, FieldName='id_tipo_pessoa')
-        self.desc = TextField(NotNull, Unique, FieldName='desc')
-
-
-class Pessoa(EdgeModel):
-
-    def __define_model__(self):
-        self.table_name = 'pessoa'
-        self.id_pessoa = IntegerField(PrimaryKey, AutoIncrement, FieldName='id_pessoa')
-        self.nome = TextField(Unique, FieldName='nome')
-        self.id_tipo_pessoa = IntegerField(NotNull, ForeignModel=TipoPessoa, FieldName='id_tipo_pessoa')
-
-
 
