@@ -10,6 +10,13 @@ It is almost a NoSQL, but you can model (or map) your database the way you like.
 - python version: python2.7
 
 
+TODO
+====
+
+- joins
+- benchmarks
+
+
 Usage
 ======
 
