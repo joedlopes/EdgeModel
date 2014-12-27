@@ -5,6 +5,7 @@ Very Simple NoSQL/ORM bindings for python2 and sqlite3
 
 Example:
 
+''' python
 class Bank(EdgeModel):
 
     def __define_model__(self):
@@ -26,11 +27,12 @@ db.open('databasepath.db', True)
 db.create_tables([TipoPessoa, Pessoa])
 
 
-itau = Bank()
-itau.name.set_value('Itau')
-itau.save()
+b1 = Bank()
+b1.name.set_value('Bank 1')
+b1.save()
 
 mycard = Card()
-mycard.description.set_value('my itau card')
+mycard.description.set_value('My card bank 1')
 mycard.id_bank.set_value(itau)
 mycard.save()
+'''
