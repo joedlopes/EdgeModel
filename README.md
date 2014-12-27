@@ -24,7 +24,7 @@ class Card(EdgeModel):
 
 db = Database()
 db.open('databasepath.db', True)
-db.create_tables([TipoPessoa, Pessoa])
+db.create_tables([Bank, Card])
 
 
 b1 = Bank()
