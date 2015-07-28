@@ -48,6 +48,6 @@ b1.save()
 
 mycard = Card()
 mycard.description.set_value('My card bank 1')
-mycard.id_bank.set_value(itau)
+mycard.id_bank.set_value(b1)
 mycard.save()
 ```
