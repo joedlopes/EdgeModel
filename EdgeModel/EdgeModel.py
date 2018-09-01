@@ -2,7 +2,7 @@ import copy
 import sqlite3
 import os
 import os.path
-import EdgeConfig as Edge
+
 
 
 class Database(object):
@@ -19,14 +19,14 @@ class Database(object):
             if override and os.path.isfile(database_path):
                 os.remove(database_path)
 
-            self.__db = sqlite3.connect(database_path)
+            self.__db = sqlite3.connect(database_path, check_same_thread=False)
             self.__opened = True
             self.__database_path = ''
 
-            Edge.print_info('Database opened: ' + database_path)
+            print('Database opened: ' + database_path)
             return True
         except Exception as e:
-            print 'Database Error during opening: ', e
+            print('Database Error during opening: ', e)
         return False
 
     def is_opened(self):
@@ -48,13 +48,13 @@ class Database(object):
         try:
             for table in tables:
                 sql_create = getattr(table(), "_SQL_CREATE")
-                #print 'creating table: ', sql_create
+                # print 'creating table: ', sql_create
                 c = self.__db.cursor()
                 c.execute(sql_create)
                 setattr(table, '_db', self.__db)
             return True
         except Exception as e:
-            print 'Table ', table.__name__, ' Error: ', e
+            print('Table ', table.__name__, ' Error: ', e)
         return False
 
     def cursor(self):
@@ -68,7 +68,6 @@ class EdgeModelException(Exception):
         self.idx = idx
 
 
-'''Field ----------------------------------------------------------------- '''
 
 
 class FieldType(object):
@@ -80,24 +79,22 @@ class FieldType(object):
     TIME = 32
 
 
-class PT(object): #property index
-    FieldName       = 0
-    Description     = 1
-    NotNull         = 2
-    Size            = 3
-    Precision       = 4
-    DefaultValue    = 5
-    PrimaryKey      = 6
-    Unique          = 7
-    AutoIncrement   = 8
-    ForeignModel    = 9
-    ForeignTable    = 10
-    ForeignKey      = 11
-
-    Properties      = 'Properties'
-
-    Fields          = 0
-    Keys            = 1
+class PT(object):  # property index
+    FieldName = 0
+    Description = 1
+    NotNull = 2
+    Size = 3
+    Precision = 4
+    DefaultValue = 5
+    PrimaryKey = 6
+    Unique = 7
+    AutoIncrement = 8
+    ForeignModel = 9
+    ForeignTable = 10
+    ForeignKey = 11
+    Properties = 'Properties'
+    Fields = 0
+    Keys = 1
 
 
 class PrimaryKey(object):
@@ -122,7 +119,7 @@ class Field(object):
     _properties = None
     _object = None
 
-    #TODO *kwargs NotNull AutoIncremnt Unique PrimaryKey EdgeModel
+    # TODO *kwargs NotNull AutoIncremnt Unique PrimaryKey EdgeModel
     def __init__(self, *vargs, **kwargs):
         self.__init_args(vargs, kwargs)
         self.__value = [self._properties[PT.DefaultValue]]
@@ -220,8 +217,6 @@ class Field(object):
     def get_object(self):
         return self._object
 
-'''---------------------------------------------------------------------------'''
-
 
 class IntegerField(Field):
     __type = FieldType.INTEGER
@@ -233,7 +228,7 @@ class IntegerField(Field):
         if (self._properties[PT.ForeignModel] is not None) and isinstance(val, self._properties[PT.ForeignModel]):
             keys = val.get_keys()
             if len(keys) > 0:
-                print 'keys: ', keys[0].get_value()
+                # print('keys: ', keys[0].get_value())
                 Field.set_value(self, keys[0].get_value())
             else:
                 raise EdgeModelException('Foreign Model ' + str(val.__class__) + ' must have a primary key', 1)
@@ -264,7 +259,8 @@ class RealField(Field):
         assert isinstance(val, float)
         Field.set_value(self, val)
 
-#TODO CREATE A TIME
+
+# TODO CREATE A TIME
 class DateTimeField(Field):
     __type = FieldType.DATETIME
 
@@ -283,23 +279,18 @@ class TimeField(Field):
         Field.__init__(self, *vargs, **kwargs)
 
     def set_value(self, val):
-        assert isinstance(val, long)
+        # assert isinstance(val, long)
         Field.set_value(self, val)
 
 
-#'''
-#    TODO prover solucao para foreign key:
-#      get e set devem utilizar a classe estrngeira-> Pessoa.set_tipo_pessoa(TipoPessoa) '''
-
-
-'''EdgeModel -------------------------------------------------------------------------------------'''
+#    TODO  Foreigner Class: People.set_poeple_type(PeopleType)
 
 
 class EdgeModel(object):
 
-#    data = 'TODO: dict [FieldName:Valor] com referecia para o valor Field.__value  utilizado para executar sqls'
+    #    data = 'TODO: dict [FieldName:Valor] com referecia para o valor Field.__value  utilizado para executar sqls'
+    #    STATIC_VARS = 'TODO: dict com todos os Fields do banco descritos staticamente'
 
-#    STATIC_VARS = 'TODO: dict com todos os Fields do banco descritos staticamente'
     table_name = None
     _SQL_CREATE, _SQL_INSERT, _SQL_UPDATE, _SQL_DELETE, _SQL_IS_PERSISTED = None, None, None, None, None
     _SQL_SELECT_SINGLE, _SQL_SELECT, _SQL_SELECT_ROWID = None, None, None
@@ -308,14 +299,16 @@ class EdgeModel(object):
     __fields = None
     __all_field_names = None
 
+    # Global vars
+    _join = None
+    _where = None
 
     def __init__(self, hash_data=None):
         self.__set_static_vars()
         self.__set_data_vars()
 
-
     '''Static -------------------------------------------------------------------------------------'''
-    #fields = [getattr(self, name) for name in props if isinstance(getattr(self, name), Field)] #keys = [field for field in fields if field._properties[PT.PrimaryKey] is True]
+    # fields = [getattr(self, name) for name in props if isinstance(getattr(self, name), Field)] #keys = [field for field in fields if field._properties[PT.PrimaryKey] is True]
 
     def __set_static_vars(self):
 
@@ -387,7 +380,7 @@ class EdgeModel(object):
 
             if o.is_foreign_key():
                 foreigns.append('FOREIGN KEY (' + o.property(PT.FieldName) +
-                                ') REFERENCES ' + o.property(PT.ForeignTable) + '(' + o.property(PT.ForeignTable) + ')')
+                                ') REFERENCES ' + o.property(PT.ForeignTable) + '(' + o.property(PT.ForeignKey) + ')')
 
         s += ", ".join(c for c in columns)
         if len(foreigns) > 0:
@@ -438,15 +431,17 @@ class EdgeModel(object):
     def __define_model__(self):
         raise EdgeModelException('Must be defined in model class', 1)
 
-    '''Object -----------------------------------------------------------------------------------------'''
+    # Object
 
     def __set_data_vars(self):
         fields = getattr(self.__class__, '__FIELDS')
         self.__values = dict()
         self.__fields = []
         self.__keys = []
+
         for f in fields:
-            newfield = copy.deepcopy(f) #TODO TRY ONLY COPY INSTEAD DEEPCOPY
+            # TODO TRY ONLY COPY INSTEAD DEEPCOPY
+            newfield = copy.deepcopy(f)
             del newfield._attrname
             setattr(self, f._attrname, newfield)
             self.__fields.append(newfield)
@@ -459,9 +454,13 @@ class EdgeModel(object):
         params = dict()
         for f in fields:
             params[f.fieldname()] = f.get_value()
-        c = self._db.cursor()
-        c.execute(query, params)
-        return c
+
+        if self._db is not None:
+            c = self._db.cursor()
+            c.execute(query, params)
+            return c
+
+        return None
 
     def __load_by_rowid(self, rowid):
         try:
@@ -476,7 +475,8 @@ class EdgeModel(object):
             self.load_from_array(data)
             return True
         except Exception as e:
-            print self.__class__.__name__, '__load_by_rowid -> Error -> ', e.message
+            pass
+            print(self.__class__.__name__, '__load_by_rowid -> Error -> ', e)
         return False
 
     def __load_by_keys(self):
@@ -490,11 +490,10 @@ class EdgeModel(object):
                 for v in self.__all_field_names:
                     data[v] = row[i]
                     i += 1
-                print 'load keys', data
                 self.load_from_array(data)
                 return True
         except Exception as e:
-            print self.__class__.__name__, '__load_by_keys -> Error -> ', e.message
+            print(self.__class__.__name__, '__load_by_keys -> Error -> ', e)
         return False
 
     def __is_persisted(self):
@@ -504,10 +503,12 @@ class EdgeModel(object):
             r = self.__execute_query(self.__class__._SQL_IS_PERSISTED, self.__keys)
             self._db.commit()
             data = r.fetchone()
-            if len(data) > 0:
-                return True
+
+            if data is not None:
+                if len(data) > 0:
+                    return True
         except Exception as e:
-            print self.__class__.__name__, '__is_persisted -> Error -> ', e.message
+            print(self.__class__.__name__, '__is_persisted -> Error -> ', e)
         return False
 
     def __update(self):
@@ -515,10 +516,10 @@ class EdgeModel(object):
             r = self.__execute_query(self.__class__._SQL_UPDATE, self.__fields)
             self._db.commit()
             if r.rowcount > 0:
-                #TODO RELOAD
+                # TODO RELOAD
                 return True
         except Exception as e:
-            print self.__class__.__name__, '__update -> Error -> ', e.message
+            print(self.__class__.__name__, '__update -> Error -> ', e)
         return False
 
     def __insert(self):
@@ -528,7 +529,7 @@ class EdgeModel(object):
             if r.lastrowid is not None and r.lastrowid > 0:
                 return self.__load_by_rowid(r.lastrowid)
         except Exception as e:
-            print self.__class__.__name__, '__insert -> Error -> ', e.message
+            print(self.__class__.__name__, '__insert -> Error -> ', e)
         return False
 
     def __delete(self):
@@ -538,7 +539,7 @@ class EdgeModel(object):
             if r.rowcount > 0:
                 return True
         except Exception as e:
-            print self.__class__.__name__, '__insert -> Error -> ', e.message
+            print(self.__class__.__name__, '__insert -> Error -> ', e)
         return False
 
     def get_keys(self):
@@ -560,23 +561,112 @@ class EdgeModel(object):
         return False
 
     def load_from_array(self, data):
-        for key, value in data.iteritems():
+        for key, value in data.items():
             if key in self.__values:
                 self.__values[key][0] = value
 
     def get_all(self):
-        pass
+        try:
+            c = self.__execute_query(self.__class__._SQL_SELECT, self.__fields)
+            if c is None:
+                return None
+
+            fetch_tuples = c.fetchall()
+            ret_classes = list()
+
+            for line in fetch_tuples:
+
+                i = 0
+                data = {}
+                for v in self.__all_field_names:
+                    data[v] = line[i]
+                    i += 1
+                self.load_from_array(data)
+                new_self = copy.deepcopy(self)
+                ret_classes.append(new_self)
+
+            return ret_classes
+        except Exception as e:
+            print(self.__class__.__name__, '__insert -> Error -> ', e)
+        return None
+
+    def get_sql(self, sql):
+        try:
+            c = self.__execute_query(sql, self.__fields)
+            if c is None:
+                return None
+
+            fetch_tuples = c.fetchall()
+            ret_classes = list()
+
+            for line in fetch_tuples:
+
+                i = 0
+                data = {}
+                for v in self.__all_field_names:
+                    data[v] = line[i]
+                    i += 1
+                self.load_from_array(data)
+                new_self = copy.deepcopy(self)
+                ret_classes.append(new_self)
+
+            return ret_classes
+        except Exception as e:
+            print(self.__class__.__name__, '__insert -> Error -> ', e)
+        return None
 
     def get_with_params(self):
-        pass
+        try:
+            sql = self.__class__._SQL_SELECT
+            if self._join is not None:
+                sql += self._join
+            if self._where is not None:
+                sql += self._where
+            c = self.__execute_query(sql, self.__fields)
+            if c is not None:
+                fetch_tuples = c.fetchall()
+                ret_classes = list()
 
-    def join(self):
-        pass
+                for line in fetch_tuples:
 
-    def where(self):
-        pass
+                    i = 0
+                    data = {}
+                    for v in self.__all_field_names:
+                        data[v] = line[i]
+                        i += 1
+                    self.load_from_array(data)
+                    new_self = copy.deepcopy(self)
+                    ret_classes.append(new_self)
 
-'''EdgeModel End --------------------------------------------------------------------------------------'''
+                return ret_classes
+            return None
+        except Exception as e:
+            print(self.__class__.__name__, '__get -> Error -> ', e)
+        return None
 
+    def get_by_id(self, id_search):
+        try:
+            sql = self.__class__._SQL_SELECT + " where " + self.__keys[0] + " = " + id_search
+            c = self.__execute_query(sql, self.__fields)
+            line = c.fetchone()
 
+            i = 0
+            data = {}
+            for v in self.__all_field_names:
+                data[v] = line[i]
+                i += 1
+            self.load_from_array(data)
 
+            return self
+
+        except Exception as e:
+            print(self.__class__.__name__, '__insert -> Error -> ', e)
+        return None
+
+    def join(self, value):
+        self._join = value
+        return self
+
+    def where(self, value):
+        self._where = value
+        return self

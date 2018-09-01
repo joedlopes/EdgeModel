@@ -1,24 +1,15 @@
-EdgeModel
-=========
+# EdgeModel
 
 NoSQL/ORM/DAO bindings for python and sqlite.
 
-This is a very small and simple library to work with Python and Sqlite.
+This is a very small and simple library to work with Python and Sqlite3.
 It is almost a NoSQL, but you can model (or map) your database the way you like.
 
 - sqlite version: sqlite3
-- python version: python2.7
+- python version: python2.7/3+
 
+## Usage
 
-TODO
-====
-
-- joins
-- benchmarks
-
-
-Usage
-======
 
 ```python
 class Bank(EdgeModel):
