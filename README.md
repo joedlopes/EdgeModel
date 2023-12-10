@@ -16,7 +16,7 @@ class Bank(EdgeModel):
 
     def __define_model__(self):
         self.table_name = 'bank'
-        self.id_bank = IntegerField(PrimaryKey, AutoIncrement, FieldName='id_type_pessoa')
+        self.id_bank = IntegerField(PrimaryKey, AutoIncrement, FieldName='id_bank')
         self.name = IntegerField(NotNull, Unique, FieldName='name')
 
 
